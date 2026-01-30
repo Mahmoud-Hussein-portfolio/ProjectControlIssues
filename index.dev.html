@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة مجموعة البقالات - (Developed) MAHMOUD HUSSEIN</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        :root {
+            --primary: #006C35;
+            --gold: #C5A059;
+            --dark: #0a0a0a;
+        }
+        body {
+            background: var(--dark);
+            color: white;
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .input-field {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+        .input-field option {
+            background: #1a1a1a;
+            color: white;
+            padding: 10px;
+        }
+        select.input-field {
+            background: rgba(30,30,30,0.95);
+            color: #fff;
+        }
+        .btn-primary {
+            background: var(--gold);
+            color: black;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary:hover {
+            background: #d4b068;
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--primary), transparent);
+            border-right: 3px solid var(--gold);
+        }
+        .doc-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+        .doc-thumb:hover {
+            transform: scale(3);
+            z-index: 100;
+            position: relative;
+        }
+        .platform-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: white;
+            padding: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .scroll-btns {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .scroll-btns button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            cursor: pointer;
+        }
+        .scroll-btns button:hover {
+            background: var(--gold);
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="relative h-[400px] overflow-hidden border-b-2 border-yellow-600">
+        <video autoplay loop muted playsinline class="absolute inset-0 w-full h-full object-cover object-[center_20%]">
+            <source src="https://cms.saudiflag.sa/uploads/Untitled_video_Made_with_Clipchamp_4_720_1_674ecab38f.mp4" type="video/mp4">
+        </video>
+        <div class="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-black to-transparent"></div>
+        
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Flag_of_Saudi_Arabia.svg/2560px-Flag_of_Saudi_Arabia.svg.png" 
+             class="absolute top-4 left-4 w-40 rounded border-2 border-white/20 z-10">
+        
+        <div class="absolute bottom-0 left-0 right-0 bg-black/80 backdrop-blur-md p-4 flex justify-between items-center flex-wrap gap-4">
+            <div>
+                <h1 class="text-2xl font-black text-white">نظام إدارة مجموعة البقالات الموحد</h1>
+                <p class="text-gold text-sm">الإصدار 2026 - تطوير MAHMOUD HUSSEIN</p>
+            </div>
+            <div class="flex items-center gap-4 bg-black/50 px-4 py-2 rounded-full">
+                <div class="text-center">
+                    <div id="clock" class="text-2xl font-mono font-bold text-yellow-500">00:00:00</div>
+                </div>
+                <div class="text-sm">
+                    <div id="hijri" class="text-green-400"></div>
+                    <div id="gregorian" class="text-gray-400"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN LAYOUT -->
+    <div class="flex">
+        <!-- SIDEBAR -->
+        <aside class="w-72 min-h-screen bg-black/90 border-l border-white/10 p-4 sticky top-0">
+            <div class="glass rounded-xl p-4 mb-6">
+                <div class="text-xs text-gray-400">المستخدم الحالي</div>
+                <div class="flex items-center gap-2 mt-2">
+                    <i class="fas fa-user-shield text-gold text-xl"></i>
+                    <span class="font-bold">المدير العام</span>
+                </div>
+            </div>
+            
+            <nav class="space-y-2">
+                <button data-page="dashboard" class="nav-item active w-full p-4 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-white/5">
+                    <i class="fas fa-th-large text-xl"></i> لوحة القيادة
+                </button>
+                <button data-page="security" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-red-400 hover:bg-white/5">
+                    <i class="fas fa-shield-virus text-xl"></i> الأمن السيبراني
+                </button>
+                <button data-page="branches" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-white/5">
+                    <i class="fas fa-store text-xl"></i> إدارة المنشآت
+                </button>
+                <button data-page="employees" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-white/5">
+                    <i class="fas fa-users text-xl"></i> إدارة الموظفين
+                </button>
+                <button data-page="alerts" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-yellow-400 hover:bg-white/5">
+                    <i class="fas fa-bell text-xl"></i> التنبيهات
+                </button>
+                <button data-page="reports" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-white/5">
+                    <i class="fas fa-file-export text-xl"></i> التقارير والتصدير
+                </button>
+                <button data-page="settings" class="nav-item w-full p-4 rounded-xl flex items-center gap-3 text-gray-300 hover:bg-white/5">
+                    <i class="fas fa-cog text-xl"></i> الإعدادات
+                </button>
+            </nav>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 p-6 overflow-y-auto" id="mainContent" style="max-height: calc(100vh - 400px);">
+            
+            <!-- DASHBOARD -->
+            <section data-section="dashboard" class="page active space-y-6">
+                <h2 class="text-3xl font-black">لوحة القيادة</h2>
+                <div id="statsContainer"></div>
+                <div class="glass p-6 rounded-2xl">
+                    <h3 class="text-xl font-bold mb-4">آخر التنبيهات</h3>
+                    <div id="dashboardAlerts" class="space-y-2"></div>
+                </div>
+            </section>
+
+            <!-- SECURITY -->
+            <section data-section="security" class="page space-y-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-16 h-16 rounded-full bg-red-900/30 flex items-center justify-center border-2 border-red-500">
+                        <i class="fas fa-shield-virus text-3xl text-red-500"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-black">مركز الأمن السيبراني</h2>
+                        <p class="text-gray-400">Cyber Defense Command Center</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="glass p-4 rounded-xl border-l-4 border-green-500">
+                        <div class="text-xs text-gray-400">Threat Level</div>
+                        <div class="text-green-500 font-bold text-xl">LOW</div>
+                    </div>
+                    <div class="glass p-4 rounded-xl border-l-4 border-blue-500">
+                        <div class="text-xs text-gray-400">Firewall</div>
+                        <div class="text-blue-500 font-bold text-xl">ACTIVE</div>
+                    </div>
+                </div>
+
+                <div class="glass p-6 rounded-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-sm text-gray-400">Security Terminal</h4>
+                        <button id="runFullScanBtn" class="btn-primary text-sm">Full Scan</button>
+                    </div>
+                    <div id="secTerminal" class="bg-black rounded-xl p-4 font-mono text-xs text-green-500 h-48 overflow-y-auto">
+                        <div>[SYSTEM] Security module initialized</div>
+                        <div>[OK] All systems operational</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BRANCHES -->
+            <section data-section="branches" class="page space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-black">إدارة المنشآت</h2>
+                    <button id="addBranchBtn" class="btn-primary">
+                        <i class="fas fa-plus ml-2"></i> إضافة منشأة
+                    </button>
+                </div>
+                
+                <input type="text" id="branchSearch" placeholder="بحث..." class="input-field max-w-md">
+                
+                <div id="branchesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+
+            <!-- EMPLOYEES -->
+            <section data-section="employees" class="page space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-3xl font-black">إدارة الموظفين</h2>
+                    <button id="addEmpBtn" class="btn-primary">
+                        <i class="fas fa-plus ml-2"></i> إضافة موظف
+                    </button>
+                </div>
+                
+                <div class="flex gap-4">
+                    <select id="empFilterBranch" class="input-field w-64">
+                        <option value="">جميع الفروع</option>
+                    </select>
+                    <input type="text" id="empSearch" placeholder="بحث..." class="input-field flex-1">
+                </div>
+                
+                <div class="glass rounded-2xl overflow-hidden">
+                    <table class="w-full text-right">
+                        <thead class="bg-white/5">
+                            <tr>
+                                <th class="p-4">الموظف</th>
+                                <th class="p-4">الفرع</th>
+                                <th class="p-4">الإقامة</th>
+                                <th class="p-4">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ALERTS -->
+            <section data-section="alerts" class="page space-y-6">
+                <h2 class="text-3xl font-black text-red-500">
+                    <i class="fas fa-exclamation-triangle ml-2"></i> غرفة التنبيهات
+                </h2>
+                
+                <div class="glass rounded-2xl overflow-hidden">
+                    <table class="w-full text-right">
+                        <thead class="bg-white/5">
+                            <tr>
+                                <th class="p-4">البيان</th>
+                                <th class="p-4">الوثيقة</th>
+                                <th class="p-4">الحالة</th>
+                                <th class="p-4">المنصة</th>
+The file is larger than 64KB — opening truncated.

@@ -7,7 +7,7 @@ async function initializeSampleData() {
     const sampleBranches = [
       {
         name: 'الرياض - الرئيسي',
-        org: 'تموينات أصل الباسل',
+        org: '',
         manager: 'محمد السعود',
         phone: '+966501234567',
         email: 'riyadh@grocery.com',
@@ -15,7 +15,7 @@ async function initializeSampleData() {
       },
       {
         name: 'جدة - الشمال',
-        org: 'تموينات أصل الباسل',
+        org: '',
         manager: 'أحمد الغامدي',
         phone: '+966502345678',
         email: 'jeddah@grocery.com',
@@ -23,7 +23,7 @@ async function initializeSampleData() {
       },
       {
         name: 'الدمام',
-        org: 'داره المواسم',
+        org: '',
         manager: 'علي القحطاني',
         phone: '+966503456789',
         email: 'dammam@grocery.com',

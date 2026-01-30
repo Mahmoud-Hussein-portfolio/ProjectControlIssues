@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dev Run - Grocery App (Developed)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>body{font-family:'Cairo',sans-serif;background:#0a0a0a;color:#fff;padding:20px} .nav{display:flex;gap:8px;margin-bottom:12px} button{padding:8px 12px;border-radius:8px;border:none;background:#111;color:#fff}</style>
+</head>
+<body>
+  <h1>Developer Run: نظام إدارة البقالات (Modular)</h1>
+  <div class="nav">
+    <button data-page="dashboard">لوحة القيادة</button>
+    <button data-page="branches">الفروع</button>
+    <button data-page="employees">الموظفين</button>
+    <button data-page="documents">المستندات</button>
+    <button data-page="reports">التقارير</button>
+  </div>
+
+  <main>
+    <section data-section="dashboard" style="display:block;background:#111;padding:12px;border-radius:8px;margin-bottom:8px">
+      <h2>لوحة القيادة</h2>
+      <div id="statsContainer"></div>
+      <div id="dashboardAlerts"></div>
+    </section>
+
+    <section data-section="branches" style="display:none;background:#111;padding:12px;border-radius:8px;margin-bottom:8px">
+      <h2>الفروع</h2>
+      <div id="branchesGrid"></div>
+    </section>
+
+    <section data-section="employees" style="display:none;background:#111;padding:12px;border-radius:8px;margin-bottom:8px">
+      <h2>الموظفين</h2>
+      <div id="empTableBody"></div>
+    </section>
+
+    <section data-section="documents" style="display:none;background:#111;padding:12px;border-radius:8px;margin-bottom:8px">
+      <h2>المستندات</h2>
+      <div id="documentsList"></div>
+    </section>
+
+    <section data-section="reports" style="display:none;background:#111;padding:12px;border-radius:8px;margin-bottom:8px">
+      <h2>التقارير</h2>
+    </section>
+  </main>
+
+  <!-- Dev script loader -->
+  <script src="src/services/DataManager.js"></script>
+  <script src="src/services/APIService.js"></script>
+  <script src="src/services/StateManager.js"></script>
+  <script src="src/components/NotificationSystem.js"></script>
+  <script src="src/components/DataTable.js"></script>
+  <script src="src/js/pages/dashboard.js"></script>
+  <script src="src/js/pages/branches.js"></script>
+  <script src="src/js/pages/employees.js"></script>
+  <script src="src/js/pages/documents.js"></script>
+  <script src="src/js/pages/reports.js"></script>
+  <script src="src/js/app-updated.js"></script>
+  <script src="src/js/fallback-assets.js"></script>
+
+  <p id="devStatus" style="margin-top:12px;color:#9ca3af">جارٍ تهيئة التطبيق...</p>
+  <script>
+    (async function(){
+      const s = document.getElementById('devStatus');
+      if (window.GroceryApp) {
+        window.devApp = new window.GroceryApp();
+        try {
+          await window.devApp.init();
+          s.textContent = '✅ التطبيق المطوَّر شغّال';
+
+          // ربط الأزرار بالـ app
+          document.querySelectorAll('[data-page]').forEach(btn=>{
+            btn.addEventListener('click', ()=>{ window.devApp.navigateTo(btn.getAttribute('data-page')); });
+          });
+
+          document.getElementById('addBranchBtn')?.addEventListener('click', async ()=>{
+            const name = prompt('اسم الفرع:');
+            if(!name) return;
+            const org = prompt('اسم المؤسسة:') || '';
+            const branch = { id: 'branch_'+Date.now(), name, organization: org, createdAt: new Date().toISOString() };
+            await window.devApp.dataManager.add('branches', branch);
+            await refreshBranches();
+          });
+
+          document.getElementById('runFullScanBtn')?.addEventListener('click', ()=> window.devApp.runFullScan && window.devApp.runFullScan());
+
+          // العرض الأولي
+          await refreshBranches();
+
+        } catch(e){
+          console.error(e);
+          s.textContent = '❌ فشل تهيئة التطبيق';
+        }
+      } else if (window.app) {
+        s.textContent = '✅ التطبيق (app) شغّال';
+      } else {
+        s.textContent = '⚠️ فشل تحميل التطبيق — تحقق من Console';
+      }
+
+      async function refreshBranches(){
+        const grid = document.getElementById('branchesGrid');
+        if(!grid || !window.devApp?.dataManager) return;
+        const branches = await window.devApp.dataManager.getAll('branches');
+        grid.innerHTML = branches.length ? branches.map(b=>
+          `<div class="glass p-4 rounded-xl">
+             <h4 class="font-bold">${b.name}</h4>
+             <div class="text-xs text-gray-400">${b.organization || ''}</div>
+             <div class="mt-2"><button data-id="${b.id}" class="delete-branch btn">حذف</button></div>
+           </div>`
+        ).join('') : '<div class="text-gray-400 p-4">لا توجد منشآت</div>';
+
+        grid.querySelectorAll('.delete-branch').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            const id = btn.getAttribute('data-id');
+            if(confirm('حذف المنشأة؟')){
+              await window.devApp.dataManager.delete('branches', id);
+              await refreshBranches();
+            }
+          });
+        });
+      }
+      
+      // منظمات (organizations) ديناميكية
+      async function getOrganizations(){
+        if(!window.devApp?.dataManager) return [];
+        return await window.devApp.dataManager.getAll('organizations');
+      }
+
+      async function ensureOrganizationSelect(){
+        const orgs = await getOrganizations();
+        // إذا كان هناك select لفرع المؤسسة في الصفحة، نحدّثه
+        const sel = document.getElementById('empFilterBranch') || document.getElementById('branchOrg');
+        if(!sel) return;
+        sel.innerHTML = '<option value="">اختر المؤسسة</option>' + orgs.map(o=>`<option value="${o.id}">${o.name}</option>`).join('') + '<option value="__new">+ إضافة مؤسسة جديدة</option>';
+        sel.addEventListener('change', async (e)=>{
+          if(e.target.value === '__new'){
+            const name = prompt('اسم المؤسسة الجديدة:');
+            if(!name) { sel.value = ''; return; }
+            const org = { id: 'org_'+Date.now(), name };
+            await window.devApp.dataManager.add('organizations', org);
+            await ensureOrganizationSelect();
+          }
+        });
+      }
+
+      // موظفين: إضافة/عرض
+      async function refreshEmployees(){
+        const container = document.getElementById('empTableBody');
+        if(!container || !window.devApp?.dataManager) return;
+        const emps = await window.devApp.dataManager.getAll('employees');
+        container.innerHTML = emps.length ? emps.map(e=>
+          `<div class="glass p-3 rounded-xl mb-2">
+             <div class="font-bold">${e.name}</div>
+             <div class="text-xs text-gray-400">${e.position || ''} - ${e.branchId || ''}</div>
+             <div class="mt-2"><button data-id="${e.id}" class="delete-emp btn">حذف</button></div>
+           </div>`
+        ).join('') : '<div class="text-gray-400 p-4">لا يوجد موظفين</div>';
+
+        container.querySelectorAll('.delete-emp').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            const id = btn.getAttribute('data-id');
+            if(confirm('حذف الموظف؟')){
+              await window.devApp.dataManager.delete('employees', id);
+              await refreshEmployees();
+            }
+          });
+        });
+      }
+
+      // زر إضافة موظف
+      document.getElementById('addEmpBtn')?.addEventListener('click', async ()=>{
+        const name = prompt('اسم الموظف الكامل:');
+        if(!name) return;
+        const position = prompt('الوظيفة:') || '';
+        // اختيار الفرع
+        const branches = await window.devApp.dataManager.getAll('branches');
+        const branchChoice = branches.length ? branches[0].id : '';
+        const emp = { id: 'emp_'+Date.now(), name, position, branchId: branchChoice, createdAt: new Date().toISOString() };
+        await window.devApp.dataManager.add('employees', emp);
+        await refreshEmployees();
+      });
+
+      // تأكد من تحديث القوائم عند بداية التشغيل
+      await ensureOrganizationSelect();
+      await refreshEmployees();
+    })();
+  </script>
+</body>
+</html>

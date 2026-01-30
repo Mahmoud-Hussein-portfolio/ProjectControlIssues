@@ -2,7 +2,7 @@
 class DataManager {
   constructor() {
     this.dbName = 'GrocerySystemDB_2026';
-    this.version = 1;
+    this.version = 2;
     this.db = null;
     this.initDB();
   }
@@ -60,6 +60,11 @@ class DataManager {
         // مخزن الإعدادات
         if (!db.objectStoreNames.contains('settings')) {
           db.createObjectStore('settings', { keyPath: 'key' });
+        }
+        // مخزن المؤسسات (organizations)
+        if (!db.objectStoreNames.contains('organizations')) {
+          const orgStore = db.createObjectStore('organizations', { keyPath: 'id' });
+          orgStore.createIndex('name', 'name', { unique: true });
         }
       };
     });

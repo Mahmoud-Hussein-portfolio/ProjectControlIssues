@@ -494,14 +494,6 @@
                             <label class="text-sm text-gray-400">المسؤول</label>
                             <select id="empResp" class="input-field">
                                 <option value="">اختر</option>
-                                <option>إنعام</option>
-                                <option>رضوان</option>
-                                <option>زكريا</option>
-                                <option>شاجان</option>
-                                <option>موهيت</option>
-                                <option>نايف</option>
-                                <option>نعيم</option>
-                                <option>هلال</option>
                             </select>
                         </div>
                     </div>
@@ -540,12 +532,8 @@
             "الواديين", "الخيرية", "العقبة"
         ];
         
-        const ORG_LIST = [
-            "تموينات أصل الباسل 1", "تموينات أصل الباسل 2", "داره المواسم 1", "داره المواسم 2",
-            "مخابز ركن الفوارس 1", "مخابز ركن الفوارس 2", "درة الواديين", "إبريز الشرق",
-            "ركن الفوارس وجبات", "الواديين بترومين", "الواديين بطحاء قريش", "الواديين الخيرية",
-            "الواديين العقبة", "الواديين جامعة الملك خالد"
-        ];
+        // تم تنظيف قائمة المؤسسات القديمة من الملف الاحتياطي
+        const ORG_LIST = [];
 
         let db = { branches: [], employees: [] };
 
